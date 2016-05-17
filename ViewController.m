@@ -13,17 +13,19 @@
 @property (weak, nonatomic) IBOutlet UIButton *redColorButton;
 @property (weak, nonatomic) IBOutlet UIButton *greenColorButton;
 @property (weak, nonatomic) IBOutlet UIButton *blueColorButton;
-@property (weak, nonatomic) IBOutlet UIPickerView *widthPickerView;
 @property (weak, nonatomic) IBOutlet UIButton *roundBrushButton;
 @property (weak, nonatomic) IBOutlet UIButton *squareBrushButton;
 @property CGPoint lastPoint;
 @property (nonatomic, strong) UIColor *lineColor;
 @property (nonatomic) CGFloat lineWidth;
-@property (nonatomic, strong) NSArray *brushSizes;
+@property (weak, nonatomic) IBOutlet UISlider *slider;
 @property (nonatomic) NSString *lineCap;
 @end
 
 @implementation ViewController
+- (IBAction)changeWidth:(id)sender {
+    self.lineWidth = self.slider.value*10;
+}
 
 - (IBAction)changeColorForRed:(id)sender {
     _lineColor = [UIColor redColor];
@@ -40,6 +42,14 @@
 - (IBAction)changeBrushForSquare:(id)sender {
     _lineCap = @"Square";
 }
+- (IBAction)savePicture:(id)sender {
+    NSString *file = @"picture.png";
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *filePath = [[paths objectAtIndex:0] stringByAppendingPathComponent:file];
+    NSLog(@"%@", filePath);
+    
+    [UIImagePNGRepresentation(_canvas.image) writeToFile:filePath atomically:YES];
+}
 
 - (void)viewDidLoad
 {
@@ -49,12 +59,8 @@
     self.canvas.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:self.canvas];
     
-    self.widthPickerView.delegate = self;
-    self.widthPickerView.dataSource = self;
-    
     _lineColor = [UIColor blackColor];
-
-    self.brushSizes = @[@"3",@"5",@"7",@"10",@"15"];
+    
     self.lineWidth = 3.f;
     self.lineCap = @"Round";
     
@@ -75,11 +81,12 @@
 
 - (void) touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
     UITouch *touch = [touches anyObject];
-    CGPoint currentPoint = [touch locationInView:self.view];
-    UIGraphicsBeginImageContext(self.view.frame.size);
-    CGRect drawRect = CGRectMake(0.0f, 0.0f, self.view.frame.size.width,
-                                 self.view.frame.size.height);
+    CGPoint currentPoint = [touch locationInView:self.canvas];
+    UIGraphicsBeginImageContext(self.canvas.frame.size);
+    CGRect drawRect = CGRectMake(0.0f, 0.0f, self.canvas.frame.size.width, self.canvas.frame.size.height);
+    
     [[[self canvas] image] drawInRect:drawRect];
+        
     if([_lineCap isEqual:@"Round"]){
         CGContextSetLineCap(UIGraphicsGetCurrentContext(),kCGLineCapRound);
     }
@@ -113,21 +120,6 @@
 - (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
 {
     return 1;
-}
-
-- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
-{
-    return self.brushSizes.count;
-}
-
-- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component
-{
-    return self.brushSizes[row];
-}
-
-- (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component
-{
-    self.lineWidth = [self.brushSizes[row] floatValue];
 }
 
 @end
